@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/cluster-api/util/annotations"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -99,6 +100,21 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, cluster *
 
 	logger.Info("Set MachinePools's NodeRefs", "noderefs", mp.Status.NodeRefs)
 	r.recorder.Event(mp, apicorev1.EventTypeNormal, "SuccessfulSetNodeRefs", fmt.Sprintf("%+v", mp.Status.NodeRefs))
+
+	// Reconcile node annotations.
+	for _, nodeRef := range nodeRefsResult.references {
+		node := &corev1.Node{}
+		if err := clusterClient.Get(ctx, client.ObjectKey{Name: nodeRef.Name}, node); err != nil {
+			logger.V(2).Info("Failed to get Node, skipping setting annotations", "err", err, "nodeRef.Name", nodeRef.Name)
+			continue
+		}
+		annotations.SetNodeAnnotation(node, clusterv1.ClusterNameAnnotation, mp.Spec.ClusterName)
+		annotations.SetNodeAnnotation(node, clusterv1.ClusterNamespaceAnnotation, mp.GetNamespace())
+		annotations.SetNodeAnnotation(node, clusterv1.MachinePoolAnnotation, mp.Name)
+		if err := clusterClient.Patch(ctx, node, client.Merge); err != nil {
+			logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+		}
+	}
 
 	if mp.Status.Replicas != mp.Status.ReadyReplicas || len(nodeRefsResult.references) != int(mp.Status.ReadyReplicas) {
 		r.Log.Info("NodeRefs != ReadyReplicas", "NodeRefs", len(nodeRefsResult.references), "ReadyReplicas", mp.Status.ReadyReplicas)

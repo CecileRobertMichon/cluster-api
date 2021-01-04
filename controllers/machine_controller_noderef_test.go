@@ -35,7 +35,7 @@ import (
 func TestGetNodeReference(t *testing.T) {
 	g := NewWithT(t)
 
-	g.Expect(clusterv1.AddToScheme(scheme.Scheme)).To(Succeed())
+	g.Expect(clusterv1.AddToScheme(scheme.Sc_tuheme)).To(Succeed())
 
 	r := &MachineReconciler{
 		Client:   fake.NewFakeClientWithScheme(scheme.Scheme),

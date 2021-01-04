@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/cluster-api/util/annotations"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -82,6 +83,14 @@ func (r *MachineReconciler) reconcileNode(ctx context.Context, cluster *clusterv
 		}
 		logger.Info("Set Machine's NodeRef", "noderef", machine.Status.NodeRef.Name)
 		r.recorder.Event(machine, corev1.EventTypeNormal, "SuccessfulSetNodeRef", machine.Status.NodeRef.Name)
+	}
+
+	// Reconcile node annotations.
+	annotations.SetNodeAnnotation(node, clusterv1.ClusterNameAnnotation, machine.Spec.ClusterName)
+	annotations.SetNodeAnnotation(node, clusterv1.ClusterNamespaceAnnotation, machine.GetNamespace())
+	annotations.SetNodeAnnotation(node, clusterv1.MachineAnnotation, machine.Name)
+	if err := remoteClient.Patch(ctx, node, client.Merge); err != nil {
+		logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
 	}
 
 	// Do the remaining node health checks, then set the node health to true if all checks pass.
