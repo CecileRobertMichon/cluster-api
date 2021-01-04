@@ -26,6 +26,9 @@ const (
 	// external objects(bootstrap and infrastructure providers)
 	ClusterLabelName = "cluster.x-k8s.io/cluster-name"
 
+	// ClusterNameAnnotation is the annotation set on nodes managed by a cluster.
+	ClusterNameAnnotation = "cluster.x-k8s.io/cluster-name"
+
 	// ProviderLabelName is the label set on components in the provider manifest.
 	// This label allows to easily identify all the components belonging to a provider; the clusterctl
 	// tool uses this label for implementing provider's lifecycle operations.

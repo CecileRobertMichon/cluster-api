@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sigs.k8s.io/cluster-api/util/annotations"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -91,6 +92,9 @@ func (r *MachineReconciler) reconcileNode(ctx context.Context, cluster *clusterv
 		conditions.MarkFalse(machine, clusterv1.MachineNodeHealthyCondition, clusterv1.NodeConditionsFailedReason, clusterv1.ConditionSeverityWarning, message)
 		return ctrl.Result{}, nil
 	}
+
+	// Reconcile node annotations.
+	annotations.SetNodeAnnotation(node, clusterv1.ClusterNameAnnotation, machine.Spec.ClusterName)
 
 	conditions.MarkTrue(machine, clusterv1.MachineNodeHealthyCondition)
 	return ctrl.Result{}, nil
