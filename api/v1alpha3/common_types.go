@@ -43,6 +43,12 @@ const (
 	// MachinePoolAnnotation is the annotation set on nodes identifying the machine pool the node belongs to.
 	MachinePoolAnnotation = "cluster.x-k8s.io/machine-pool"
 
+	// OwnerKindAnnotation is the annotation set on nodes identifying the owner kind.
+	OwnerKindAnnotation = "cluster.x-k8s.io/owner-kind"
+
+	// OwnerNameAnnotation is the annotation set on nodes identifying the owner name.
+	OwnerNameAnnotation = "cluster.x-k8s.io/owner-name"
+
 	// PausedAnnotation is an annotation that can be applied to any Cluster API
 	// object to prevent a controller from processing a resource.
 	//

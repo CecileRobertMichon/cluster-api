@@ -17,7 +17,6 @@ limitations under the License.
 package annotations
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,10 +50,18 @@ func HasWithPrefix(prefix string, annotations map[string]string) bool {
 	return false
 }
 
-// SetNodeAnnotation sets a key value annotation on the Node.
-func SetNodeAnnotation(node *corev1.Node, key, value string) {
-	if node.Annotations == nil {
-		node.Annotations = make(map[string]string)
+// AddAnnotations sets the desired annotations on the object and returns true if the annotations have changed.
+func AddAnnotations(o metav1.Object, desired map[string]string) bool {
+	annotations := o.GetAnnotations()
+	if annotations == nil {
+		annotations = make(map[string]string)
 	}
-	node.Annotations[key] = value
+	hasChanged := false
+	for k, v := range desired {
+		if cur, ok := annotations[k]; !ok || cur != v {
+			annotations[k] = v
+			hasChanged = true
+		}
+	}
+	return hasChanged
 }

@@ -86,11 +86,19 @@ func (r *MachineReconciler) reconcileNode(ctx context.Context, cluster *clusterv
 	}
 
 	// Reconcile node annotations.
-	annotations.SetNodeAnnotation(node, clusterv1.ClusterNameAnnotation, machine.Spec.ClusterName)
-	annotations.SetNodeAnnotation(node, clusterv1.ClusterNamespaceAnnotation, machine.GetNamespace())
-	annotations.SetNodeAnnotation(node, clusterv1.MachineAnnotation, machine.Name)
-	if err := remoteClient.Patch(ctx, node, client.Merge); err != nil {
-		logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+	desired := map[string]string{
+		clusterv1.ClusterNameAnnotation:      machine.Spec.ClusterName,
+		clusterv1.ClusterNamespaceAnnotation: machine.GetNamespace(),
+		clusterv1.MachineAnnotation:          machine.Name,
+	}
+	if owner, err := util.GetMachineOwner(ctx, r.Client, machine); err == nil && owner != nil {
+		desired[clusterv1.OwnerKindAnnotation] = owner.GetKind()
+		desired[clusterv1.OwnerNameAnnotation] = owner.GetName()
+	}
+	if annotations.AddAnnotations(node, desired) {
+		if err := remoteClient.Patch(ctx, node, client.Merge); err != nil {
+			logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+		}
 	}
 
 	// Do the remaining node health checks, then set the node health to true if all checks pass.

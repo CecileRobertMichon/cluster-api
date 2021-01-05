@@ -108,11 +108,15 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, cluster *
 			logger.V(2).Info("Failed to get Node, skipping setting annotations", "err", err, "nodeRef.Name", nodeRef.Name)
 			continue
 		}
-		annotations.SetNodeAnnotation(node, clusterv1.ClusterNameAnnotation, mp.Spec.ClusterName)
-		annotations.SetNodeAnnotation(node, clusterv1.ClusterNamespaceAnnotation, mp.GetNamespace())
-		annotations.SetNodeAnnotation(node, clusterv1.MachinePoolAnnotation, mp.Name)
-		if err := clusterClient.Patch(ctx, node, client.Merge); err != nil {
-			logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+		desired := map[string]string{
+			clusterv1.ClusterNameAnnotation:      mp.Spec.ClusterName,
+			clusterv1.ClusterNamespaceAnnotation: mp.GetNamespace(),
+			clusterv1.MachinePoolAnnotation:      mp.Name,
+		}
+		if annotations.AddAnnotations(node, desired) {
+			if err := clusterClient.Patch(ctx, node, client.Merge); err != nil {
+				logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+			}
 		}
 	}
 
