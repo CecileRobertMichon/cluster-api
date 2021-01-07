@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"sigs.k8s.io/cluster-api/util/annotations"
+	"sigs.k8s.io/cluster-api/util/patch"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -108,14 +109,20 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, cluster *
 			logger.V(2).Info("Failed to get Node, skipping setting annotations", "err", err, "nodeRef.Name", nodeRef.Name)
 			continue
 		}
+		patchHelper, err := patch.NewHelper(node, clusterClient)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 		desired := map[string]string{
 			clusterv1.ClusterNameAnnotation:      mp.Spec.ClusterName,
 			clusterv1.ClusterNamespaceAnnotation: mp.GetNamespace(),
-			clusterv1.MachinePoolAnnotation:      mp.Name,
+			clusterv1.OwnerKindAnnotation:        mp.Kind,
+			clusterv1.OwnerNameAnnotation:        mp.Name,
 		}
 		if annotations.AddAnnotations(node, desired) {
-			if err := clusterClient.Patch(ctx, node, client.Merge); err != nil {
+			if err := patchHelper.Patch(ctx, node); err != nil {
 				logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+				return ctrl.Result{}, err
 			}
 		}
 	}

@@ -23,7 +23,6 @@ import (
 	"math"
 	"math/rand"
 	"regexp"
-	"sigs.k8s.io/cluster-api/controllers/external"
 	"strconv"
 	"strings"
 	"time"
@@ -72,11 +71,6 @@ var (
 	ErrUnstructuredFieldNotFound = fmt.Errorf("field not found")
 	kubeSemver                   = regexp.MustCompile(`^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-0-9a-zA-Z_\.+]*)?$`)
 )
-
-// MachineOwner provides a data interface for different machine owner types.
-type MachineOwner struct {
-	*unstructured.Unstructured
-}
 
 // ParseMajorMinorPatch returns a semver.Version from the string provided
 // by looking only at major.minor.patch and stripping everything else out.
@@ -342,55 +336,6 @@ func GetOwnerMachine(ctx context.Context, c client.Client, obj metav1.ObjectMeta
 	}
 	return nil, nil
 }
-
-// GetMachineOwner returns the Unstructured object owning the current resource.
-func GetMachineOwner(ctx context.Context, c client.Client, obj metav1.Object) (*MachineOwner, error) {
-	allowedGKs := []schema.GroupKind{
-		{
-			Group: clusterv1.GroupVersion.Group,
-			Kind:  "KubeadmControlPlane",
-		},
-		{
-			Group: clusterv1.GroupVersion.Group,
-			Kind:  "MachineSet",
-		},
-		{
-			Group: clusterv1.GroupVersion.Group,
-			Kind:  "Cluster",
-		},
-	}
-
-	for _, ref := range obj.GetOwnerReferences() {
-
-		refGV, err := schema.ParseGroupVersion(ref.APIVersion)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse GroupVersion from %q", ref.APIVersion)
-		}
-		refGVK := refGV.WithKind(ref.Kind)
-
-		for _, gk := range allowedGKs {
-			if refGVK.Group == gk.Group && refGVK.Kind == gk.Kind {
-				return GetOwnerByRef(ctx, c, &corev1.ObjectReference{
-					APIVersion: ref.APIVersion,
-					Kind:       ref.Kind,
-					Name:       ref.Name,
-					Namespace:  obj.GetNamespace(),
-				})
-			}
-		}
-	}
-	return nil, nil
-}
-
-// GetOwnerByRef finds and returns the owner by looking at the object reference.
-func GetOwnerByRef(ctx context.Context, c client.Client, ref *corev1.ObjectReference) (*MachineOwner, error) {
-	obj, err := external.Get(ctx, c, ref, ref.Namespace)
-	if err != nil {
-		return nil, err
-	}
-	return &MachineOwner{obj}, nil
-}
-
 
 // GetMachineByName finds and return a Machine object using the specified params.
 func GetMachineByName(ctx context.Context, c client.Client, namespace, name string) (*clusterv1.Machine, error) {

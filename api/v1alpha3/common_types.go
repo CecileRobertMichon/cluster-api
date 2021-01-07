@@ -40,9 +40,6 @@ const (
 	// MachineAnnotation is the annotation set on nodes identifying the machine the node belongs to.
 	MachineAnnotation = "cluster.x-k8s.io/machine"
 
-	// MachinePoolAnnotation is the annotation set on nodes identifying the machine pool the node belongs to.
-	MachinePoolAnnotation = "cluster.x-k8s.io/machine-pool"
-
 	// OwnerKindAnnotation is the annotation set on nodes identifying the owner kind.
 	OwnerKindAnnotation = "cluster.x-k8s.io/owner-kind"
 

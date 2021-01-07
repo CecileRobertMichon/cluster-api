@@ -19,7 +19,9 @@ package controllers
 import (
 	"context"
 	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/cluster-api/util/annotations"
+	"sigs.k8s.io/cluster-api/util/patch"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -86,18 +88,23 @@ func (r *MachineReconciler) reconcileNode(ctx context.Context, cluster *clusterv
 	}
 
 	// Reconcile node annotations.
+	patchHelper, err := patch.NewHelper(node, remoteClient)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 	desired := map[string]string{
 		clusterv1.ClusterNameAnnotation:      machine.Spec.ClusterName,
 		clusterv1.ClusterNamespaceAnnotation: machine.GetNamespace(),
 		clusterv1.MachineAnnotation:          machine.Name,
 	}
-	if owner, err := util.GetMachineOwner(ctx, r.Client, machine); err == nil && owner != nil {
-		desired[clusterv1.OwnerKindAnnotation] = owner.GetKind()
-		desired[clusterv1.OwnerNameAnnotation] = owner.GetName()
+	if owner := metav1.GetControllerOfNoCopy(machine); owner != nil {
+		desired[clusterv1.OwnerKindAnnotation] = owner.Kind
+		desired[clusterv1.OwnerNameAnnotation] = owner.Name
 	}
 	if annotations.AddAnnotations(node, desired) {
-		if err := remoteClient.Patch(ctx, node, client.Merge); err != nil {
+		if err := patchHelper.Patch(ctx, node); err != nil {
 			logger.V(2).Info("Failed patch node to set annotations", "err", err, "node name", node.Name)
+			return ctrl.Result{}, err
 		}
 	}
 
