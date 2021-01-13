@@ -23,7 +23,7 @@ import (
 const (
 	controlPlaneCloudInit = `{{.Header}}
 {{template "files" .WriteFiles}}
--   path: /tmp/kubeadm.yaml
+-   path: /run/kubeadm/kubeadm.yaml
     owner: root:root
     permissions: '0640'
     content: |
@@ -31,9 +31,13 @@ const (
 {{.ClusterConfiguration | Indent 6}}
       ---
 {{.InitConfiguration | Indent 6}}
+-   path: /run/cluster-api/bootstrap
+    owner: root:root
+    permissions: '0640'
+    content: ""
 runcmd:
 {{- template "commands" .PreKubeadmCommands }}
-  - 'kubeadm init --config /tmp/kubeadm.yaml {{.KubeadmVerbosity}}'
+  - 'kubeadm init --config /run/kubeadm/kubeadm.yaml {{.KubeadmVerbosity}} && echo success > /run/cluster-api/bootstrap-success.complete'
 {{- template "commands" .PostKubeadmCommands }}
 {{- template "ntp" .NTP }}
 {{- template "users" .Users }}

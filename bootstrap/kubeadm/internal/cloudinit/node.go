@@ -19,12 +19,16 @@ package cloudinit
 const (
 	nodeCloudInit = `{{.Header}}
 {{template "files" .WriteFiles}}
--   path: /tmp/kubeadm-join-config.yaml
+-   path: /run/kubeadm/kubeadm-join-config.yaml
     owner: root:root
     permissions: '0640'
     content: |
       ---
 {{.JoinConfiguration | Indent 6}}
+-   path: /run/cluster-api/bootstrap
+    owner: root:root
+    permissions: '0640'
+    content: ""
 runcmd:
 {{- template "commands" .PreKubeadmCommands }}
   - {{ .KubeadmCommand }}
