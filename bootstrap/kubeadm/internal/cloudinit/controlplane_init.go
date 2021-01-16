@@ -37,7 +37,8 @@ const (
     content: ""
 runcmd:
 {{- template "commands" .PreKubeadmCommands }}
-  - 'kubeadm init --config /run/kubeadm/kubeadm.yaml {{.KubeadmVerbosity}} && echo success > /run/cluster-api/bootstrap-success.complete'
+  - 'kubeadm init --config /run/kubeadm/kubeadm.yaml {{.KubeadmVerbosity}}'
+  - {{ .SentinelFileCommand }}
 {{- template "commands" .PostKubeadmCommands }}
 {{- template "ntp" .NTP }}
 {{- template "users" .Users }}

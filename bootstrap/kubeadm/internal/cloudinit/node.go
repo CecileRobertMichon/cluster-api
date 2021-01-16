@@ -32,6 +32,7 @@ const (
 runcmd:
 {{- template "commands" .PreKubeadmCommands }}
   - {{ .KubeadmCommand }}
+  - {{ .SentinelFileCommand }}
 {{- template "commands" .PostKubeadmCommands }}
 {{- template "ntp" .NTP }}
 {{- template "users" .Users }}

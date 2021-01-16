@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	standardJoinCommand            = "kubeadm join --config /run/kubeadm/kubeadm-join-config.yaml %s && echo success > /run/cluster-api/bootstrap-success.complete"
+	standardJoinCommand            = "kubeadm join --config /run/kubeadm/kubeadm-join-config.yaml %s"
+	sentinelFileCommand            = "echo success > /run/cluster-api/bootstrap-success.complete"
 	retriableJoinScriptName        = "/usr/local/bin/kubeadm-bootstrap-script"
 	retriableJoinScriptOwner       = "root"
 	retriableJoinScriptPermissions = "0755"
@@ -50,6 +51,7 @@ type BaseUserData struct {
 	UseExperimentalRetry bool
 	KubeadmCommand       string
 	KubeadmVerbosity     string
+	SentinelFileCommand  string
 }
 
 func (input *BaseUserData) prepare() error {
@@ -64,6 +66,7 @@ func (input *BaseUserData) prepare() error {
 		}
 		input.WriteFiles = append(input.WriteFiles, *joinScriptFile)
 	}
+	input.SentinelFileCommand = sentinelFileCommand
 	return nil
 }
 

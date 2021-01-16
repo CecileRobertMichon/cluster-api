@@ -36,7 +36,6 @@ log::error_exit() {
 
 log::success_exit() {
   log::info "cluster.x-k8s.io kubeadm bootstrap script $0 finished"
-  echo success > /run/cluster-api/bootstrap-success.complete
   exit 0
 }
 
